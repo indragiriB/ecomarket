@@ -1,0 +1,43 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Light (default) */
+:root {
+  --c-primary: 46 125 50; --c-on-primary: 255 255 255;
+  --c-primary-container: 200 230 201; --c-on-primary-container: 11 61 18;
+  --c-secondary-container: 221 234 217; --c-on-secondary-container: 16 31 16;
+  --c-tertiary: 56 101 105; --c-tertiary-container: 188 235 239;
+  --c-surface: 247 250 245; --c-surface-container: 238 243 235; --c-surface-container-high: 230 237 227;
+  --c-surface-variant: 215 225 212; --c-outline: 120 134 122;
+  --c-on-surface: 24 29 25; --c-on-surface-variant: 84 97 86;
+  --c-error: 186 26 26; --c-error-container: 255 218 214;
+  color-scheme: light;
+}
+/* Dark */
+[data-theme='dark'] {
+  --c-primary: 143 214 150; --c-on-primary: 8 36 14;
+  --c-primary-container: 31 58 36; --c-on-primary-container: 200 230 201;
+  --c-secondary-container: 36 50 40; --c-on-secondary-container: 213 232 208;
+  --c-tertiary: 158 216 222; --c-tertiary-container: 30 59 63;
+  --c-surface: 14 18 15; --c-surface-container: 21 27 23; --c-surface-container-high: 28 36 30;
+  --c-surface-variant: 40 52 43; --c-outline: 78 92 80;
+  --c-on-surface: 232 238 230; --c-on-surface-variant: 150 163 150;
+  --c-error: 255 180 171; --c-error-container: 74 26 23;
+  color-scheme: dark;
+}
+
+@layer base {
+  body { @apply bg-surface text-on-surface font-sans antialiased transition-colors duration-300; }
+  h1, h2, h3 { @apply font-display tracking-tight; }
+  :focus-visible { @apply outline outline-2 outline-offset-2 outline-primary; }
+}
+@layer components {
+  .btn { @apply inline-flex items-center justify-center gap-2 rounded-full px-5 h-11 text-sm font-medium transition active:scale-95 disabled:opacity-40 disabled:pointer-events-none; }
+  .btn-filled { @apply btn bg-on-surface text-surface hover:opacity-85; }
+  .btn-tonal { @apply btn bg-on-surface/10 text-on-surface hover:bg-on-surface/15; }
+  .btn-outline { @apply btn border border-on-surface/20 text-on-surface hover:bg-on-surface/10; }
+  .card { @apply rounded-m3 border border-on-surface/5 bg-surface-container; }
+  .field { @apply h-11 w-full rounded-full border border-on-surface/15 bg-transparent px-4 text-base placeholder:text-on-surface-variant; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
