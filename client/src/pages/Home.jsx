@@ -1,6 +1,6 @@
 import { useFetch } from '../api';
 import Icon from '../components/Icon';
-import { ProductCard, Spinner, ErrorState, Img } from '../components/ui';
+import { ProductCard, ProductGridSkeleton, ErrorState, Img, GRID } from '../components/ui';
 import { HERO, CTA_IMG, productImg } from '../images';
 
 const WAYS = [
@@ -9,7 +9,7 @@ const WAYS = [
   ['Limbah', 'Berapa kilogram sampah yang tidak jadi terbuang.'],
 ];
 
-export default function Home({ go, addToCart }) {
+export default function Home({ go, addToCart, favs, toggleFav }) {
   const stats = useFetch('/stats');
   const recs = useFetch('/products?sort=score');
   const top = recs.data?.[0];
@@ -58,9 +58,9 @@ export default function Home({ go, addToCart }) {
           <h2 className="text-4xl font-bold md:text-5xl">Pilihan hijau</h2>
           <button className="text-sm font-medium underline underline-offset-4" onClick={() => go('catalog')}>Lihat semua</button>
         </div>
-        {recs.loading ? <Spinner /> : recs.error ? <ErrorState message={recs.error} onRetry={recs.reload} /> : (
-          <div className="grid grid-cols-2 gap-x-3 gap-y-8 md:gap-x-5 xl:grid-cols-4">
-            {recs.data.slice(0, 4).map((p) => <ProductCard key={p.id} p={p} onOpen={(id) => go('detail', id)} onAdd={addToCart} />)}
+        {recs.loading && !recs.data ? <ProductGridSkeleton n={4} /> : recs.error ? <ErrorState message={recs.error} onRetry={recs.reload} /> : (
+          <div className={GRID}>
+            {recs.data.slice(0, 4).map((p) => <ProductCard key={p.id} p={p} onOpen={(id) => go('detail', id)} onAdd={addToCart} fav={favs.includes(p.id)} onFav={toggleFav} />)}
           </div>
         )}
       </section>

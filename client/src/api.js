@@ -10,7 +10,12 @@ export async function api(path, options = {}) {
     body: options.body ? JSON.stringify(options.body) : undefined,
   });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || 'Permintaan gagal. Coba lagi.');
+  if (!res.ok) {
+    if (res.status === 401 && !path.startsWith('/auth/')) window.dispatchEvent(new Event('auth:expired'));
+    const err = new Error(data.error || 'Permintaan gagal. Coba lagi.');
+    err.fields = data.fields;
+    throw err;
+  }
   return data;
 }
 
@@ -28,3 +33,12 @@ export function useFetch(path) {
 }
 
 export const rupiah = (n) => 'Rp' + Number(n).toLocaleString('id-ID');
+
+/** State yang bertahan saat berpindah halaman / refresh (sessionStorage) */
+export function usePersistentState(key, initial) {
+  const [v, setV] = useState(() => {
+    try { const s = sessionStorage.getItem(key); return s ? { ...initial, ...JSON.parse(s) } : initial; } catch { return initial; }
+  });
+  useEffect(() => { try { sessionStorage.setItem(key, JSON.stringify(v)); } catch {} }, [key, v]);
+  return [v, setV];
+}
