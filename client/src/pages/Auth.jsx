@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { api, setToken } from '../api';
-import { Img } from '../components/ui';
+import { Img, DemoTag } from '../components/ui';
+import Confirm from '../components/Confirm';
 import Icon from '../components/Icon';
 import { HERO } from '../images';
 
@@ -10,6 +11,17 @@ export default function Auth({ onAuth, theme, toggleTheme }) {
   const [show, setShow] = useState(false);
   const [st, setSt] = useState({ busy: false, error: null });
   const signup = mode === 'signup';
+  const [social, setSocial] = useState(null);
+  // Login sosial = simulasi: masuk sebagai akun demo, tanpa pihak ketiga
+  const socialLogin = async () => {
+    const d = { name: 'Pengguna Demo', username: 'demo', password: 'demo12345' };
+    setSocial(null); setSt({ busy: true, error: null });
+    try {
+      let r;
+      try { r = await api('/auth/login', { method: 'POST', body: d }); } catch { r = await api('/auth/signup', { method: 'POST', body: d }); }
+      setToken(r.token); onAuth(r.user);
+    } catch (err) { setSt({ busy: false, error: err.message }); }
+  };
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
 
   const submit = async (e) => {
@@ -74,11 +86,23 @@ export default function Auth({ onAuth, theme, toggleTheme }) {
             <button className="btn-filled w-full !h-12" disabled={st.busy}>{st.busy ? 'Memproses…' : signup ? 'Daftar' : 'Masuk'}</button>
           </form>
 
+          <div className="mt-6">
+            <div className="flex items-center gap-3 text-xs text-on-surface-variant"><span className="h-px flex-1 bg-on-surface/15" />atau lanjut dengan <DemoTag /><span className="h-px flex-1 bg-on-surface/15" /></div>
+            <div className="mt-4 grid grid-cols-3 gap-2">
+              {[['Google', 'G'], ['Apple', 'A'], ['Facebook', 'f']].map(([n, l]) => (
+                <button key={n} type="button" onClick={() => setSocial(n)} aria-label={`Lanjut dengan ${n}`} className="btn-outline !h-12 !px-0">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-on-surface/10 text-xs font-bold">{l}</span><span className="hidden sm:inline">{n}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="mt-8 flex items-center justify-between gap-3 rounded-m3 border border-dashed border-on-surface/15 p-4 text-sm">
             <p className="text-on-surface-variant">Akun demo<br /><b className="text-on-surface">admin / admin123</b></p>
             <button type="button" className="btn-outline !h-10" onClick={useDemo}>Pakai akun ini</button>
           </div>
         </div>
+        <Confirm open={!!social} title={`Lanjutkan dengan ${social}?`} text="Simulasi: kamu akan masuk sebagai Pengguna Demo (demo@example.com). Tidak ada data dikirim ke pihak ketiga." confirmLabel="Lanjutkan" onConfirm={socialLogin} onCancel={() => setSocial(null)} />
       </main>
     </div>
   );

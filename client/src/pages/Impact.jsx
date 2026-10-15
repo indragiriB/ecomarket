@@ -1,5 +1,5 @@
 import { useFetch, rupiah } from '../api';
-import { Spinner, ErrorState, EmptyState } from '../components/ui';
+import { Spinner, ErrorState, EmptyState, DemoTag } from '../components/ui';
 import Icon from '../components/Icon';
 
 const BADGES = [
@@ -7,7 +7,7 @@ const BADGES = [
   { at: 3, label: 'Pelanggan hijau', icon: 'leaf', key: 'orders', unit: 'pesanan' },
   { at: 5, label: 'Penyelamat 5 kg limbah', icon: 'award', key: 'waste', unit: 'kg' },
 ];
-const METHOD = { transfer: 'Transfer bank', ewallet: 'E-wallet', cod: 'Bayar di tempat' };
+const METHOD = { transfer: 'Transfer bank', ewallet: 'E-wallet', qris: 'QRIS', ecopay: 'EcoPay', cod: 'Bayar di tempat' };
 const when = (s) => new Date(s.replace(' ', 'T') + 'Z').toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
 const day = (d) => new Date(d + 'T00:00:00').toLocaleDateString('id-ID', { weekday: 'short' });
 
@@ -44,6 +44,14 @@ export default function Impact({ go }) {
           </div>
           <div className="mt-2 flex gap-2">{weekly.map((w) => <span key={w.date} className="flex-1 text-center text-xs text-on-surface-variant">{day(w.date)}</span>)}</div>
         </div>
+      </section>
+
+      <section className="rounded-m3xl bg-primary-container p-5 text-on-primary-container">
+        <h3 className="flex items-center gap-2 font-display text-lg font-bold"><Icon name="sparkles" size={18} /> Insight AI <DemoTag /></h3>
+        <p className="mt-2 text-sm">
+          Kamu sudah menghindari {totals.waste} kg limbah. Jika menambah satu produk bersekor ≥ 90 tiap minggu, perkiraan tambahan CO₂ yang dihemat sekitar {(Math.max(totals.co2, 2) * 0.18).toFixed(1)} kg per bulan.
+        </p>
+        <button className="btn-filled mt-3" onClick={() => go('catalog')}>Lihat produk skor tinggi</button>
       </section>
 
       <section>

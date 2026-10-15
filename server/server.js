@@ -225,7 +225,7 @@ app.post('/api/checkout', wrap((req, res) => {
   if (name.trim().length < 3) fields.name = 'Nama minimal 3 karakter.';
   if (!/^(\+62|62|0)8\d{8,11}$/.test(phone.replace(/[\s-]/g, ''))) fields.phone = 'Nomor HP tidak valid. Contoh: 081234567890.';
   if (address.trim().length < 10) fields.address = 'Alamat minimal 10 karakter, termasuk jalan dan kota.';
-  if (!['transfer', 'ewallet', 'cod'].includes(payment_method)) fields.method = 'Pilih metode pembayaran.';
+  if (!['transfer', 'ewallet', 'qris', 'ecopay', 'cod'].includes(payment_method)) fields.method = 'Pilih metode pembayaran.';
   if (Object.keys(fields).length) return res.status(400).json({ error: 'Periksa kembali data pengiriman.', fields });
 
   const items = cartOf(req.user.id);

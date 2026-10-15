@@ -3,9 +3,11 @@ import { api, rupiah, usePersistentState } from '../api';
 import { EmptyState } from '../components/ui';
 import Confirm from '../components/Confirm';
 import Icon from '../components/Icon';
+import PaymentSheet from '../components/PaymentSheet';
+import { useWallet } from '../demo';
 
 const INIT = { name: '', phone: '', address: '', method: 'transfer' };
-const METHODS = [['transfer', 'Transfer bank'], ['ewallet', 'E-wallet'], ['cod', 'Bayar di tempat']];
+const METHODS = [['transfer', 'Transfer bank (VA)'], ['ewallet', 'E-wallet'], ['qris', 'QRIS'], ['ecopay', 'EcoPay (saldo)'], ['cod', 'Bayar di tempat']];
 
 const validate = (f) => {
   const e = {};
@@ -15,13 +17,15 @@ const validate = (f) => {
   return e;
 };
 
-export default function Checkout({ cart, go, refreshCart }) {
+export default function Checkout({ cart, go, refreshCart, user, pushNotif }) {
   // Input tersimpan: kembali ke keranjang tidak menghapus isian
   const [f, setF] = usePersistentState('checkout-form', INIT);
   const [touched, setTouched] = useState({});
   const [submitted, setSubmitted] = useState(false);
   const [srv, setSrv] = useState({});
   const [ask, setAsk] = useState(false);
+  const [sheet, setSheet] = useState(false);
+  const [w, setW] = useWallet(user.username);
   const [st, setSt] = useState({ busy: false, error: null, done: null });
 
   const errs = { ...validate(f), ...srv };
@@ -40,13 +44,15 @@ export default function Checkout({ cart, go, refreshCart }) {
     setSubmitted(true);
     const bad = Object.keys(validate(f))[0];
     if (bad) { document.getElementById(`f-${bad}`)?.focus(); return; }
-    setAsk(true);
+    f.method === 'cod' ? setAsk(true) : setSheet(true);
   };
   const pay = async () => {
-    setAsk(false); setSt({ busy: true, error: null, done: null });
+    setAsk(false); setSheet(false); setSt({ busy: true, error: null, done: null });
     try {
       const done = await api('/checkout', { method: 'POST', body: { name: f.name, phone: f.phone, address: f.address, payment_method: f.method } });
       await refreshCart(); setF(INIT);
+      if (f.method === 'ecopay') setW({ balance: w.balance - total, tx: [{ id: Date.now(), label: `Belanja ${done.order_ref}`, amount: -total, date: new Date().toISOString() }, ...w.tx] });
+      pushNotif('Pesanan dikonfirmasi', `Pesanan ${done.order_ref} sedang disiapkan penjual.`, 'order');
       setSt({ busy: false, error: null, done });
     } catch (err) { setSrv(err.fields || {}); setSt({ busy: false, error: err.message, done: null }); }
   };
@@ -83,7 +89,7 @@ export default function Checkout({ cart, go, refreshCart }) {
 
         <fieldset>
           <legend className="text-sm font-medium">Metode pembayaran</legend>
-          <div className="mt-2 grid gap-2 sm:grid-cols-3">
+          <div className="mt-2 grid gap-2 sm:grid-cols-2">
             {METHODS.map(([k, l]) => (
               <label key={k} className="flex min-h-[48px] cursor-pointer items-center gap-2 rounded-m3 border border-on-surface/15 px-4 text-sm has-[:checked]:border-primary has-[:checked]:bg-primary-container has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-primary">
                 <input type="radio" name="method" value={k} checked={f.method === k} onChange={() => setF({ ...f, method: k })} className="accent-primary" />
@@ -106,6 +112,7 @@ export default function Checkout({ cart, go, refreshCart }) {
 
       <Confirm open={ask} title="Konfirmasi pesanan" text={`Bayar ${rupiah(total)} dengan ${method}? Ini hanya simulasi.`}
         confirmLabel="Ya, bayar" onConfirm={pay} onCancel={() => setAsk(false)} />
+      {sheet && <PaymentSheet method={f.method} total={total} wallet={w} onPaid={pay} onCancel={() => setSheet(false)} />}
     </form>
   );
 }

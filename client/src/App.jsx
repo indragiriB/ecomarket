@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { api, getToken, setToken } from './api';
 import Auth from './pages/Auth';
 import Home from './pages/Home';
@@ -7,6 +7,10 @@ import Detail from './pages/Detail';
 import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
 import Impact from './pages/Impact';
+import Account from './pages/Account';
+import Admin from './pages/Admin';
+import { Bell, PushBanner } from './components/Notifications';
+import { useStored, SEED_NOTIFS, DEFAULT_NSET } from './demo';
 import Icon from './components/Icon';
 import Confirm from './components/Confirm';
 import { Spinner } from './components/ui';
@@ -25,6 +29,11 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [authReady, setAuthReady] = useState(false);
   const [askLogout, setAskLogout] = useState(false);
+  const [notifs, setNotifs] = useStored('eco-notifs', SEED_NOTIFS);
+  const [nset, setNset] = useStored('eco-notif-settings', DEFAULT_NSET);
+  const [banner, setBanner] = useState(null);
+  const nsetRef = useRef(nset);
+  nsetRef.current = nset;
   const [theme, setTheme] = useState(() => document.documentElement.dataset.theme || 'dark');
 
   useEffect(() => {
@@ -56,6 +65,14 @@ export default function App() {
     return () => window.removeEventListener('auth:expired', clearSession);
   }, [clearSession]);
 
+  // Notifikasi dummy: masuk ke daftar, dan tampil sebagai banner push bila diaktifkan
+  const pushNotif = useCallback((title, body, type = 'info') => {
+    if (type !== 'info' && nsetRef.current[type] === false) return;
+    const n = { id: Date.now(), type, title, body, time: new Date().toISOString(), read: false };
+    setNotifs((p) => [n, ...p].slice(0, 30));
+    if (nsetRef.current.push) { setBanner(n); setTimeout(() => setBanner((b) => (b?.id === n.id ? null : b)), 5000); }
+  }, [setNotifs]);
+
   const addToCart = async (p) => {
     try { setCart(await api('/cart', { method: 'POST', body: { product_id: p.id } })); notify(`${p.name} masuk keranjang`); }
     catch (e) { notify(e.message); }
@@ -69,11 +86,14 @@ export default function App() {
 
   const count = cart.reduce((s, i) => s + i.qty, 0);
   const active = view.name === 'detail' ? 'catalog' : view.name === 'checkout' ? 'cart' : view.name;
-  const ctx = { go, addToCart, cart, setCart, refreshCart, notify, favs, toggleFav, user };
   const dark = theme === 'dark';
+  const toggleTheme = () => setTheme(dark ? 'light' : 'dark');
+  const ctx = { go, addToCart, cart, setCart, refreshCart, notify, favs, toggleFav, user, pushNotif, nset, setNset, theme, toggleTheme, requestLogout: () => setAskLogout(true) };
+  const isAdmin = user?.username === 'admin';
+  const nav = isAdmin ? [...NAV, { key: 'admin', label: 'Admin' }] : NAV;
 
   if (!authReady) return <Spinner />;
-  if (!user) return <Auth onAuth={setUser} theme={theme} toggleTheme={() => setTheme(dark ? 'light' : 'dark')} />;
+  if (!user) return <Auth onAuth={setUser} theme={theme} toggleTheme={toggleTheme} />;
 
   return (
     <div className="min-h-screen overflow-x-hidden">
@@ -85,7 +105,7 @@ export default function App() {
             <Icon name="leaf" size={22} className="text-primary" />ecomarket
           </button>
           <nav aria-label="Navigasi utama" className="hidden gap-8 md:flex">
-            {NAV.map((n) => (
+            {nav.map((n) => (
               <button key={n.key} onClick={() => go(n.key)} aria-current={active === n.key ? 'page' : undefined}
                 className={`relative min-h-[44px] text-sm font-medium transition ${active === n.key ? 'text-on-surface' : 'text-on-surface-variant hover:text-on-surface'}`}>
                 {n.label}
@@ -94,14 +114,15 @@ export default function App() {
             ))}
           </nav>
           <div className="flex items-center gap-2">
-            <span className="mr-1 hidden text-sm text-on-surface-variant lg:block">Halo, {user.name.split(' ')[0]}</span>
-            <button className="btn-tonal !h-11 !w-11 !px-0" onClick={() => setTheme(dark ? 'light' : 'dark')}
+            <Bell notifs={notifs} setNotifs={setNotifs} />
+            <button className="btn-tonal !hidden !h-11 !w-11 !px-0 md:!inline-flex" onClick={toggleTheme}
               aria-label={dark ? 'Ganti ke mode terang' : 'Ganti ke mode gelap'}><Icon name={dark ? 'sun' : 'moon'} size={18} /></button>
             <button className="btn-filled !h-11 !px-3 sm:!px-5" onClick={() => go('cart')} aria-label={`Keranjang, ${count} item`}>
               <Icon name="bag" size={18} /><span className="hidden sm:inline">Keranjang</span>
               {count > 0 && <span className="rounded-full bg-primary px-2 text-xs text-on-primary">{count}</span>}
             </button>
-            <button className="btn-tonal !h-11 !w-11 !px-0" onClick={() => setAskLogout(true)} aria-label="Keluar"><Icon name="logout" size={18} /></button>
+            <button className="btn-tonal !h-11 !w-11 !px-0" onClick={() => go('account')} aria-label="Akun saya" aria-current={view.name === 'account' ? 'page' : undefined}><Icon name="user" size={18} /></button>
+            <button className="btn-tonal !hidden !h-11 !w-11 !px-0 md:!inline-flex" onClick={() => setAskLogout(true)} aria-label="Keluar"><Icon name="logout" size={18} /></button>
           </div>
         </div>
       </header>
@@ -114,6 +135,8 @@ export default function App() {
         {view.name === 'cart' && <Cart {...ctx} />}
         {view.name === 'checkout' && <Checkout {...ctx} />}
         {view.name === 'impact' && <Impact {...ctx} />}
+        {view.name === 'account' && <Account {...ctx} />}
+        {view.name === 'admin' && <Admin {...ctx} />}
       </main>
 
       <footer className="mx-auto max-w-7xl px-4 pb-28 text-sm text-on-surface-variant md:px-8 md:pb-10">
@@ -133,6 +156,8 @@ export default function App() {
           </button>
         ))}
       </nav>
+
+      <PushBanner n={banner} onClose={() => setBanner(null)} />
 
       {toast && <div role="status" className="fixed bottom-24 left-1/2 z-30 w-max max-w-[90vw] -translate-x-1/2 rounded-full bg-on-surface px-5 py-3 text-sm font-medium text-surface shadow-xl md:bottom-8">{toast}</div>}
 

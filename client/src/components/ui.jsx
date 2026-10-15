@@ -113,3 +113,6 @@ export const ProductCard = ({ p, onOpen, onAdd, fav, onFav }) => (
     </div>
   </article>
 );
+
+/** Penanda fitur simulasi (di luar MVP PRD): UI saja, data dummy */
+export const DemoTag = () => <span className="rounded-full bg-tertiary-container px-2 py-0.5 text-[11px] font-medium text-tertiary">Demo</span>;
