@@ -1,0 +1,29 @@
+# Dependensi (dipasang ulang dengan npm install)
+node_modules/
+
+# Hasil build
+dist/
+build/
+
+# Database lokal SQLite
+server/ecomarket.db
+server/ecomarket.db-shm
+server/ecomarket.db-wal
+
+# Environment dan rahasia
+.env
+.env.*
+!.env.example
+
+# Log
+*.log
+npm-debug.log*
+
+# Berkas OS/editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Dokumen tugas bawaan (bukan artefak proyek)
+/Tugas Penerapan SCM pada Proyek Website.docx
