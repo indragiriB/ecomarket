@@ -41,3 +41,7 @@
   .field { @apply h-11 w-full rounded-full border border-on-surface/15 bg-transparent px-4 text-base placeholder:text-on-surface-variant; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
+* {
+  scrollbar-width: none;
+}
