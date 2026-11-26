@@ -9,6 +9,7 @@ import Checkout from './pages/Checkout';
 import Impact from './pages/Impact';
 import Account from './pages/Account';
 import Admin from './pages/Admin';
+import Contact from './pages/Contact';
 import { Bell, PushBanner } from './components/Notifications';
 import { useStored, SEED_NOTIFS, DEFAULT_NSET } from './demo';
 import Icon from './components/Icon';
@@ -19,6 +20,7 @@ const NAV = [
   { key: 'home', label: 'Beranda' },
   { key: 'catalog', label: 'Katalog' },
   { key: 'impact', label: 'Dampak saya' },
+  { key: 'contact', label: 'Kontak' },
 ];
 
 export default function App() {
@@ -137,10 +139,14 @@ export default function App() {
         {view.name === 'impact' && <Impact {...ctx} />}
         {view.name === 'account' && <Account {...ctx} />}
         {view.name === 'admin' && <Admin {...ctx} />}
+        {view.name === 'contact' && <Contact go={go} user={user} />}
       </main>
 
       <footer className="mx-auto max-w-7xl px-4 pb-28 text-sm text-on-surface-variant md:px-8 md:pb-10">
-        <div className="border-t border-on-surface/10 pt-6">© 2026 EcoMarket. Belanja pelan-pelan, dampaknya panjang.</div>
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-on-surface/10 pt-6">
+          <p>© 2026 EcoMarket. Belanja pelan-pelan, dampaknya panjang.</p>
+          <button className="font-medium underline underline-offset-4 hover:text-on-surface" onClick={() => go('contact')}>Kontak</button>
+        </div>
       </footer>
 
       <nav aria-label="Navigasi bawah" style={{ marginBottom: 'env(safe-area-inset-bottom)' }}

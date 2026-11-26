@@ -37,6 +37,9 @@ CREATE TABLE IF NOT EXISTS orders (
   id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, order_ref TEXT NOT NULL UNIQUE,
   name TEXT NOT NULL, phone TEXT NOT NULL, address TEXT NOT NULL, payment_method TEXT NOT NULL,
   total INTEGER NOT NULL, created_at TEXT DEFAULT (datetime('now')));
+CREATE TABLE IF NOT EXISTS contact_messages (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, email TEXT NOT NULL,
+  subject TEXT, message TEXT NOT NULL, created_at TEXT DEFAULT (datetime('now')));
 `);
 
 // Migrasi dari versi lama (keranjang & dampak belum per-pengguna)
@@ -165,6 +168,20 @@ app.get('/api/auth/me', wrap((req, res) => {
 app.post('/api/auth/logout', wrap((req, res) => {
   db.prepare('DELETE FROM sessions WHERE token = ?').run(bearer(req));
   res.json({ ok: true });
+}));
+
+// Kontak (publik, tidak memerlukan login)
+app.post('/api/contact', wrap((req, res) => {
+  const { name = '', email = '', subject = '', message = '' } = req.body;
+  const fields = {};
+  if (name.trim().length < 2) fields.name = 'Nama minimal 2 karakter.';
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) fields.email = 'Alamat email tidak valid.';
+  if (message.trim().length < 10) fields.message = 'Pesan minimal 10 karakter.';
+  if (Object.keys(fields).length) return res.status(400).json({ error: 'Periksa kembali data yang kamu isi.', fields });
+
+  const info = db.prepare('INSERT INTO contact_messages (name, email, subject, message) VALUES (?,?,?,?)')
+    .run(name.trim(), email.trim().toLowerCase(), subject.trim().slice(0, 120), message.trim().slice(0, 2000));
+  res.status(201).json({ id: Number(info.lastInsertRowid), message: 'Pesan berhasil dikirim. Terima kasih!' });
 }));
 
 // Semua data di bawah ini milik pengguna yang login
